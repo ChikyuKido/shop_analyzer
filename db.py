@@ -51,13 +51,20 @@ class Database:
     def insertShopEntry(self, entry: ShopEntry):
         try:
             self.cursor.execute("""
-                INSERT INTO shop_entry (name, price, image_data, product_link, additional_info, date_added,type)
-                VALUES (?, ?,?, ?, ?, ?, ?);
-            """, (entry.name, entry.price, entry.image_data, entry.product_link, entry.additional_info, entry.date_added,str(entry.type)))
-
+                SELECT image_data FROM shop_entry WHERE product_link = ?;
+            """, (entry.product_link,))
+            existing_image_data = self.cursor.fetchone()
+            if existing_image_data and existing_image_data[0] == entry.image_data:
+                entry.image_data = ""
+            self.cursor.execute("""
+            INSERT INTO shop_entry (name, price, image_data, product_link, additional_info, date_added, type)
+                VALUES (?, ?, ?, ?, ?, ?, ?);
+            """, (entry.name, entry.price, entry.image_data, entry.product_link, entry.additional_info, entry.date_added, str(entry.type)))
             self.db.commit()
+
         except sqlite3.IntegrityError:
             print(f"Entry with name '{entry.name}' for date '{entry.date_added}' already exists!")
+
 
 
     def close(self):
