@@ -3,12 +3,12 @@ from db import Database
 from parser import Parser
 from tqdm import tqdm
 
-MAX_PAGES = 356  # Currently the max
+MAX_PAGES = 356
 
 if __name__ == "__main__":
     db = Database("database.db")
     parser = Parser()
-    page = 1
+    page = 3
 
     with tqdm(total=MAX_PAGES, desc="Pages", unit="page") as pbar:
         while True:
@@ -17,10 +17,11 @@ if __name__ == "__main__":
             if len(shop_entries) == 0:
                 break
             for entry in shop_entries:
-                db.insertShopEntry(entry)
+                print(entry.additional_info)
+                #db.insertShopEntry(entry)
             page += 1
             pbar.update(1)
             if page > MAX_PAGES:
                 pbar.total = page
-
+            break
     db.close()

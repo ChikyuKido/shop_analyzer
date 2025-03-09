@@ -9,9 +9,8 @@ class ShopEntryTypes(Enum):
     LITER = 1
     GRAMM = 2
     STUECK = 3
-    ONE_KG = 4
-    METER = 5
-    KISTE = 6
+    METER = 4
+    KISTE = 5
 
 
 class ShopEntry:
@@ -26,6 +25,7 @@ class ShopEntry:
 
 class Database:
     def __init__(self,path):
+        self.path = path
         is_new = not os.path.exists(path)
         self.db = sqlite3.connect(path)
         self.cursor = self.db.cursor()
@@ -65,8 +65,30 @@ class Database:
         except sqlite3.IntegrityError:
             print(f"Entry with name '{entry.name}' for date '{entry.date_added}' already exists!")
 
-
-
+    def searchShopEntry(self,query):
+        self.cursor.execute(f"""
+        SELECT DISTINCT * FROM shop_entry group by product_link HAVING name like "%{query}%" 
+        """)
+        results = self.cursor.fetchall()
+        if not results:
+            return None
+        return [{"name": r[1],"image": r[3],"product_link":r[4],"additional_info":r[5],"type":r[7]} for r in results]
+    def getInfoForShopEntry(self,product_link):
+        self.cursor.execute(f"""
+         SELECT DISTINCT * FROM shop_entry group by product_link HAVING product_link like "{product_link}" 
+        """)
+        result = self.cursor.fetchone()
+        if not result:
+            return None
+        return {"name": result[1],"price":result[2], "image": result[3],"product_link":result[4],"additional_info":result[5],"type":result[7]}
+    def getPriceHistoryForShopEntry(self,product_id):
+        self.cursor.execute(f"""
+         SELECT * FROM shop_entry  WHERE product_link like "{product_id}" 
+        """)
+        results = self.cursor.fetchall()
+        if not results:
+            return None
+        return [{"price": r[2],"additional_info":r[5],"date":r[6]} for r in results]
     def close(self):
         self.db.commit()
         self.db.close()
